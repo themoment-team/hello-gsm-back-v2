@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  hello-redis:
+    container_name: hello-redis
+    image: redis:7
+    ports:
+      - "6379:6379"
+    volumes:
+      - hello-redis-volume:/data
+      - hello-redis-volume:/usr/local/conf/redis.conf
+    restart: unless-stopped
+    networks:
+      - hello-backend
+
+  hello-mysql:
+    container_name: hello-mysql
+    image: mysql:8
+    ports:
+      - "3306:3306"
+    volumes:
+      - hello-mysql-volume:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: hello
+      TZ: 'Asia/Seoul'
+    restart: unless-stopped
+    networks:
+      - hello-backend
+
+  hello-spring:
+    #env_file:
+    #  - "prod.env"
+    container_name: hello-spring
+    image: hellogsm-web:0.0.1-SNAPSHOT
+    #    platform: linux/amd64 # to arm64 when use OS in x86
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      # 실제 배포 환경 구축 시에는 RDS 연결하니까 DB 관련 설정도 private하게 env에 설정하기
+      HELLO_MYSQL_HOST: jdbc:mysql://hello-mysql:3306/hello?useSSL=false&allowPublicKeyRetrieval=true
+      HELLO_MYSQL_USERNAME: root
+      HELLO_MYSQL_PASSWORD: password
+      HELLO_REDIS_HOST: hello-redis
+      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
+      AWS_SECRET_KEY: ${AWS_SECRET_KEY}
+      AWS_BUCKET_NAME: ${AWS_BUCKET_NAME}
+      OAUTH2_GOOGLE_CLIENT_ID: ${OAUTH2_GOOGLE_CLIENT_ID}
+      OAUTH2_GOOGLE_CLIENT_SECRET: ${OAUTH2_GOOGLE_CLIENT_SECRET}
+      OAUTH2_GOOGLE_REDIRECT_URI: ${OAUTH2_GOOGLE_REDIRECT_URI}
+      OAUTH2_GITHUB_CLIENT_ID: ${OAUTH2_GITHUB_CLIENT_ID}
+      OAUTH2_GITHUB_CLIENT_SECRET: ${OAUTH2_GITHUB_CLIENT_SECRET}
+      OAUTH2_GITHUB_REDIRECT_URI: ${OAUTH2_GITHUB_REDIRECT_URI}
+      OAUTH2_KAKAO_CLIENT_ID: ${OAUTH2_KAKAO_CLIENT_ID}
+      OAUTH2_KAKAO_CLIENT_SECRET: ${OAUTH2_KAKAO_CLIENT_SECRET}
+      OAUTH2_KAKAO_REDIRECT_URI: ${OAUTH2_KAKAO_REDIRECT_URI}
+      HELLO_REDIRECT_BASE_URI: ${HELLO_REDIRECT_BASE_URI}
+      HELLO_ALLOW_ORIGINS: ${HELLO_ALLOW_ORIGINS}
+    networks:
+      - hello-backend
+    depends_on: # mysql, redis 컨테이너가 생성될 때 까지 대기
+      - hello-redis
+      - hello-mysql
+
+volumes:
+  hello-redis-volume: {}
+  hello-mysql-volume: {}
+
+networks:
+  hello-backend: {}

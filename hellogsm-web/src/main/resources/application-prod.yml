@@ -10,31 +10,33 @@ server:
       storage-type: redis
       timeout: 1440m
       cookie:
-        domain: hellogsm.kr
+        # domain: hellogsm.kr
         max-age: 1440m
         http-only: true
-        secure: true
+        # secure: true # 실제 운영 시 true
 
 spring:
   mvc:
     throw-exception-if-no-handler-found: true
-  config:
-    import:
-      - classpath:oauth.yml
-      - classpath:auth.yml
-      - classpath:schedule.yml
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${MYSQL_HOST}
-    username: ${MYSQL_USERNAME}
-    password: ${MYSQL_PASSWORD}
+    url: ${HELLO_MYSQL_HOST}
+    username: ${HELLO_MYSQL_USERNAME}
+    password: ${HELLO_MYSQL_PASSWORD}
   jpa:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update # 실제 연동 시 변경 필요
+    properties:
+      hibernate:
+        check_nullability: true
+        format_sql: false
+        highlight_sql: true
+        use_sql_comments: true
+        show_sql: true
   batch:
     jdbc:
-      initialize-schema: never
+      initialize-schema: always # 실제 운영 시 never
   data:
     redis:
       host: ${HELLO_REDIS_HOST}
@@ -51,8 +53,49 @@ spring:
       s3:
         region: ap-northeast-2
         bucket-name:  ${AWS_BUCKET_NAME}
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${OAUTH2_GOOGLE_CLIENT_ID}
+            client-secret: ${OAUTH2_GOOGLE_CLIENT_SECRET}
+            scope:
+              - profile
+              - email
+            redirect-uri: ${OAUTH2_GOOGLE_REDIRECT_URI}
+          github:
+            clientId: ${OAUTH2_GITHUB_CLIENT_ID}
+            clientSecret: ${OAUTH2_GITHUB_CLIENT_SECRET}
+            redirect-uri: ${OAUTH2_GITHUB_REDIRECT_URI}
+          kakao:
+            authorization-grant-type: authorization_code
+            client-id: ${OAUTH2_KAKAO_CLIENT_ID}
+            client-secret: ${OAUTH2_KAKAO_CLIENT_SECRET}
+            scope: profile_nickname
+            client-authentication-method: POST
+            redirect-uri: ${OAUTH2_KAKAO_REDIRECT_URI}
+            client-name: Kakao
+        provider:
+          kakao:
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-name-attribute: id
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+
+#logging:
+#  level:
+#    root: info
+#    kr.hellogsm.back_v2_demo: info
+
 
 logging:
   level:
     root: info
-    kr.hellogsm.back_v2_demo: info
+    org:
+      hibernate.orm.jdbc.bind: trace # for parameter binding
+    kr.hellogsm.back_v2_demo: trace
+
+auth:
+  redirect-base-uri: ${HELLO_REDIRECT_BASE_URI} # https://www.hellogsm.kr/
+  allowed-origins: ${HELLO_ALLOW_ORIGINS} # https://BBB.kr/,https://AAA.kr/  ","으로만 구분 - 공백 없이
