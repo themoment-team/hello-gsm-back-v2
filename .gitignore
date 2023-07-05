@@ -1,3 +1,7 @@
+# hellogsm-web env
+**/**.env
+!**/**.gpg
+
 # gitignore.io 사용
 
 # Created by https://www.toptal.com/developers/gitignore/api/intellij+all,java,gradle,macos,windows
