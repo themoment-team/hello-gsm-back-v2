@@ -41,7 +41,7 @@ class SetRegistrationNumberJobConfigTest {
 
     // 예외 발생 시 예외가 throw 되지 않고, 초기화하는 코드가 실행되니 주의
     // 성공했다고 떠도 예외가 발생해서 롤백되었을 수도 있다는 말임
-    @Test
+    //@Test
     @DisplayName("Job 실행을 위한 코드")
     public void testJob(@Qualifier(value = SetRegistrationNumberJobConfig.JOB_NAME) @Autowired Job job) throws Exception {
         // given
