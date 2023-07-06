@@ -38,5 +38,11 @@ subprojects {
         useJUnitPlatform()
         String activeProfile = System.properties['spring.profiles.active']
         systemProperty "spring.profiles.active", activeProfile
+
+        /*
+        local profile로 테스트 실행 가능
+        ./gradlew clean hellogsm-web:build -Dspring.profiles.active=local
+        ./gradlew clean hellogsm-web:test -Dspring.profiles.active=local
+        */
     }
 }
