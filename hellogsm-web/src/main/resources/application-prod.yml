@@ -28,15 +28,12 @@ spring:
     hibernate:
       ddl-auto: update # 실제 연동 시 변경 필요
     properties:
-      hibernate:
+      hibernate: # 실제 운영 시 db 결과 조회는 끄기
         check_nullability: true
         format_sql: false
         highlight_sql: true
         use_sql_comments: true
         show_sql: true
-  batch:
-    jdbc:
-      initialize-schema: always # 실제 운영 시 never
   data:
     redis:
       host: ${HELLO_REDIS_HOST}

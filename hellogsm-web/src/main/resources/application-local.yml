@@ -38,9 +38,6 @@ spring:
         highlight_sql: true
         use_sql_comments: true
     show_sql: true
-  batch:
-    jdbc:
-      initialize-schema: always
   data:
     redis:
       host: ${HELLO_REDIS_HOST}
