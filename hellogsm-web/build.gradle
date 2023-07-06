@@ -3,6 +3,10 @@ plugins {
 }
 
 bootJar {
+    dependsOn asciidoctor
+//    from ("${asciidoctor.outputDir}") {
+//        into 'static/docs'
+//    } 정적 리소스 jar에 생기는 것까지 확인했는데, url로 접근이 불가능함
     enabled = true
     layered // layered 이미지 생성
 }
