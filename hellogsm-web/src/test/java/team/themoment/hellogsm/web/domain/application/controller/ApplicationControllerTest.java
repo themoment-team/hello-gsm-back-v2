@@ -12,8 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.restdocs.RestDocumentationContextProvider;
 import org.springframework.restdocs.RestDocumentationExtension;
+import org.springframework.restdocs.cookies.RequestCookiesSnippet;
 import org.springframework.restdocs.mockmvc.RestDocumentationResultHandler;
 import org.springframework.restdocs.payload.FieldDescriptor;
 import org.springframework.test.web.servlet.MockMvc;
@@ -21,6 +23,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.multipart.MultipartFile;
 import team.themoment.hellogsm.entity.domain.application.entity.admission.DesiredMajor;
 import team.themoment.hellogsm.entity.domain.application.enums.*;
 import team.themoment.hellogsm.web.domain.application.dto.domain.*;
@@ -32,6 +35,7 @@ import team.themoment.hellogsm.web.domain.application.dto.request.ApplicationSta
 import team.themoment.hellogsm.web.domain.application.dto.response.SingleApplicationRes;
 import team.themoment.hellogsm.web.domain.application.dto.response.TicketResDto;
 import team.themoment.hellogsm.web.domain.application.service.*;
+import team.themoment.hellogsm.web.domain.common.ControllerTestUtil;
 import team.themoment.hellogsm.web.global.security.auth.AuthenticatedUserManager;
 
 import java.math.BigDecimal;
@@ -51,6 +55,8 @@ import static org.springframework.restdocs.payload.JsonFieldType.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.request.RequestDocumentation.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static team.themoment.hellogsm.web.domain.common.ControllerTestUtil.enumAsString;
+import static team.themoment.hellogsm.web.domain.common.ControllerTestUtil.requestSessionCookie;
 
 @Tag("restDocsTest")
 @WebMvcTest(controllers = ApplicationController.class)
@@ -85,6 +91,8 @@ class ApplicationControllerTest {
     private QueryTicketsService queryTicketsService;
     @MockBean
     private ImageSaveService imageSaveService;
+    @MockBean
+    private FinalSubmissionService finalSubmissionService;
 
 
     protected final FieldDescriptor[] gedResponseFields = new FieldDescriptor[]{
@@ -117,7 +125,7 @@ class ApplicationControllerTest {
             fieldWithPath("admissionInfo.applicantBirth").type(STRING).description("지원자 생년월일"),
             fieldWithPath("admissionInfo.address").type(STRING).description("지원자 주소"),
             fieldWithPath("admissionInfo.detailAddress").type(STRING).description("지원자 상세 주소"),
-            fieldWithPath("admissionInfo.graduation").type(GraduationStatus.class).description("지원자 졸업 여부"),
+            fieldWithPath("admissionInfo.graduation").type(enumAsString(GraduationStatus.class)).description("지원자 졸업 여부"),
             fieldWithPath("admissionInfo.telephone").type(STRING).description("지원자 집전화"),
             fieldWithPath("admissionInfo.applicantPhoneNumber").type(STRING).description("지원자 전화 번호"),
             fieldWithPath("admissionInfo.guardianName").type(STRING).description("보호자 이름"),
@@ -128,20 +136,23 @@ class ApplicationControllerTest {
             fieldWithPath("admissionInfo.schoolName").type(STRING).description("지원자 중학교 이름"),
             fieldWithPath("admissionInfo.schoolLocation").type(STRING).description("지원자 학교 주소"),
             fieldWithPath("admissionInfo.applicantImageUri").type(STRING).description("지원자 증명사진"),
-            fieldWithPath("admissionInfo.desiredMajor.firstDesiredMajor").type(STRING).description("지원자 1지망 학과"),
-            fieldWithPath("admissionInfo.desiredMajor.secondDesiredMajor").type(STRING).description("지원자 2지망 학과"),
-            fieldWithPath("admissionInfo.desiredMajor.thirdDesiredMajor").type(STRING).description("지원자 3지망 학과"),
-            fieldWithPath("admissionInfo.screening").type(Screening.class).description("지원 전형"),
+            fieldWithPath("admissionInfo.desiredMajor.firstDesiredMajor").type(enumAsString(Major.class)).description("지원자 1지망 학과"),
+            fieldWithPath("admissionInfo.desiredMajor.secondDesiredMajor").type(enumAsString(Major.class)).description("지원자 2지망 학과"),
+            fieldWithPath("admissionInfo.desiredMajor.thirdDesiredMajor").type(enumAsString(Major.class)).description("지원자 3지망 학과"),
+            fieldWithPath("admissionInfo.screening").type(enumAsString(Screening.class)).description("지원 전형"),
 
             fieldWithPath("middleSchoolGrade").type(STRING).description("중학교 점수가 json 문자열 형태로 되어있음"),
 
             fieldWithPath("admissionStatus.isFinalSubmitted").type(BOOLEAN).description("최종 제출 여부"),
             fieldWithPath("admissionStatus.isPrintsArrived").type(BOOLEAN).description("서류 도착 여부"),
-            fieldWithPath("admissionStatus.firstEvaluation").type(STRING).description("첫 번째 시험 평가 결과"),
-            fieldWithPath("admissionStatus.secondEvaluation").type(STRING).description("두 번째 시험 평가 결과"),
+            fieldWithPath("admissionStatus.firstEvaluation").type(enumAsString(EvaluationStatus.class)).description("첫 번째 시험 평가 결과"),
+            fieldWithPath("admissionStatus.secondEvaluation").type(enumAsString(EvaluationStatus.class)).description("두 번째 시험 평가 결과"),
+            fieldWithPath("admissionStatus.screeningSubmittedAt").type(enumAsString(Screening.class)).description("최종제출 시 전형 상태").optional(),
+            fieldWithPath("admissionStatus.screeningFirstEvaluationAt").type(enumAsString(Screening.class)).description("1차 평가 이후 전형 상태").optional(),
+            fieldWithPath("admissionStatus.screeningSecondEvaluationAt").type(enumAsString(Screening.class)).description("2차 평가 이후 전형 상태").optional(),
             fieldWithPath("admissionStatus.registrationNumber").type(NUMBER).description("접수 번호").optional(),
             fieldWithPath("admissionStatus.secondScore").type(NUMBER).description("2차 점수").optional(),
-            fieldWithPath("admissionStatus.finalMajor").type(STRING).description("최종 학과").optional()
+            fieldWithPath("admissionStatus.finalMajor").type(enumAsString(Major.class)).description("최종 학과").optional()
     };
 
     protected final FieldDescriptor[] createRequestFields = new FieldDescriptor[]{
@@ -165,7 +176,7 @@ class ApplicationControllerTest {
     };
 
 
-            ApplicationReqDto applicationReqDto = new ApplicationReqDto(
+    ApplicationReqDto applicationReqDto = new ApplicationReqDto(
             "https://naver.com",
             "광주소프트웨어마이스터중학교",
             "이세상 어딘가",
@@ -184,10 +195,6 @@ class ApplicationControllerTest {
             "이세상어딘가",
             "GENERAL"
     );
-
-
-    ApplicationControllerTest() {
-    }
 
     @BeforeEach
     void setUp(RestDocumentationContextProvider restDocumentation) {
@@ -237,6 +244,9 @@ class ApplicationControllerTest {
                         EvaluationStatus.NOT_YET,
                         null,
                         null,
+                        null,
+                        null,
+                        null,
                         null
                 ));
     }
@@ -267,6 +277,9 @@ class ApplicationControllerTest {
                 .andExpect(jsonPath("$.admissionStatus.isPrintsArrived").value(singleApplicationRes.admissionStatus().isPrintsArrived()))
                 .andExpect(jsonPath("$.admissionStatus.firstEvaluation").value(singleApplicationRes.admissionStatus().firstEvaluation().toString()))
                 .andExpect(jsonPath("$.admissionStatus.secondEvaluation").value(singleApplicationRes.admissionStatus().secondEvaluation().toString()))
+                .andExpect(jsonPath("$.admissionStatus.screeningSubmittedAt").value(singleApplicationRes.admissionStatus().screeningSubmittedAt()))
+                .andExpect(jsonPath("$.admissionStatus.screeningFirstEvaluationAt").value(singleApplicationRes.admissionStatus().screeningFirstEvaluationAt()))
+                .andExpect(jsonPath("$.admissionStatus.screeningSecondEvaluationAt").value(singleApplicationRes.admissionStatus().screeningSecondEvaluationAt()))
                 .andExpect(jsonPath("$.admissionStatus.registrationNumber").value(singleApplicationRes.admissionStatus().registrationNumber()))
                 .andExpect(jsonPath("$.admissionStatus.secondScore").value(singleApplicationRes.admissionStatus().secondScore()))
                 .andExpect(jsonPath("$.admissionStatus.finalMajor").value(singleApplicationRes.admissionStatus().finalMajor()))
@@ -295,7 +308,7 @@ class ApplicationControllerTest {
                 .andExpect(jsonPath("$.admissionGrade.gedMaxScore").value(admissionGrade.gedMaxScore()))
                 .andDo(this.documentationHandler.document(
                         pathParameters(parameterWithName("userId").description("조회하고자 하는 USER의 식별자")),
-                        requestCookies(cookieWithName("SESSION").description("사용자의 SESSION ID, 브라우저로 접근 시 자동 생성됩니다.")),
+                        requestSessionCookie(),
                         responseFields(
                                 Stream.concat(
                                         Arrays.stream(applicationCommonResponseFields),
@@ -341,16 +354,16 @@ class ApplicationControllerTest {
                 .andExpect(jsonPath("$.admissionGrade.volunteerScore").value(admissionGrade.volunteerScore()))
                 .andExpect(jsonPath("$.admissionGrade.extracurricularSubtotalScore").value(admissionGrade.extracurricularSubtotalScore()))
                 .andDo(this.documentationHandler.document(
-                        pathParameters(parameterWithName("userId").description("조회하고자 하는 USER의 식별자")),
-                        requestCookies(cookieWithName("SESSION").description("사용자의 SESSION ID, 브라우저로 접근 시 자동 생성됩니다.")),
-                        responseFields(
-                                Stream.concat(
-                                        Arrays.stream(applicationCommonResponseFields),
-                                        Arrays.stream(generalResponseFields)
-                                ).toArray(FieldDescriptor[]::new)
+                                pathParameters(parameterWithName("userId").description("조회하고자 하는 USER의 식별자")),
+                                requestSessionCookie(),
+                                responseFields(
+                                        Stream.concat(
+                                                Arrays.stream(applicationCommonResponseFields),
+                                                Arrays.stream(generalResponseFields)
+                                        ).toArray(FieldDescriptor[]::new)
+                                )
                         )
-                )
-        );
+                );
     }
 
     @Test
@@ -441,7 +454,7 @@ class ApplicationControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andDo(this.documentationHandler.document(
-                        requestCookies(cookieWithName("SESSION").description("사용자의 SESSION ID, 브라우저로 접근 시 자동 생성됩니다.")),
+                        requestSessionCookie(),
                         requestFields(createRequestFields)
                 ));
     }
@@ -458,7 +471,7 @@ class ApplicationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andDo(this.documentationHandler.document(
-                        requestCookies(cookieWithName("SESSION").description("사용자의 SESSION ID, 브라우저로 접근 시 자동 생성됩니다.")),
+                        requestSessionCookie(),
                         requestFields(createRequestFields)
                 ));
     }
@@ -480,6 +493,9 @@ class ApplicationControllerTest {
                         true,
                         EvaluationStatus.NOT_YET,
                         EvaluationStatus.NOT_YET,
+                        Screening.SPECIAL_VETERANS,
+                        Screening.SOCIAL,
+                        Screening.GENERAL,
                         1L,
                         "100"
                 ))
@@ -513,7 +529,7 @@ class ApplicationControllerTest {
                                 parameterWithName("page").description("페이지"),
                                 parameterWithName("size").description("원서 크기")
                         ),
-                        requestCookies(cookieWithName("SESSION").description("사용자의 SESSION ID, 브라우저로 접근 시 자동 생성됩니다.")),
+                        requestSessionCookie(),
                         responseFields(
                                 fieldWithPath("info.count").type(NUMBER).description("원서 개수"),
                                 fieldWithPath("applications[].applicationId").type(NUMBER).description("원서 식별자"),
@@ -525,12 +541,15 @@ class ApplicationControllerTest {
                                 fieldWithPath("applications[].teacherPhoneNumber").type(STRING).description("선생님 전화번호"),
                                 fieldWithPath("applications[].isFinalSubmitted").type(BOOLEAN).description("최종 제출 여부"),
                                 fieldWithPath("applications[].isPrintsArrived").type(BOOLEAN).description("서류 도착 여부"),
-                                fieldWithPath("applications[].firstEvaluation").type(STRING).description("1차 평가 결과"),
-                                fieldWithPath("applications[].secondEvaluation").type(STRING).description("2차 평가 결과"),
+                                fieldWithPath("applications[].firstEvaluation").type(enumAsString(EvaluationStatus.class)).description("1차 평가 결과"),
+                                fieldWithPath("applications[].secondEvaluation").type(enumAsString(EvaluationStatus.class)).description("2차 평가 결과"),
+                                fieldWithPath("applications[].screeningSubmittedAt").type(enumAsString(Screening.class)).description("최종제출 시 전형 상태"),
+                                fieldWithPath("applications[].screeningFirstEvaluationAt").type(enumAsString(Screening.class)).description("1차 평가 이후 전형 상태"),
+                                fieldWithPath("applications[]screeningSecondEvaluationAt").type(enumAsString(Screening.class)).description("2차 평가 이후 전형 상태"),
                                 fieldWithPath("applications[].registrationNumber").type(NUMBER).description("접수 번호"),
                                 fieldWithPath("applications[].secondScore").type(STRING).description("2차 시험 점수")
                         )
-        ));
+                ));
     }
 
     @Test
@@ -541,6 +560,9 @@ class ApplicationControllerTest {
                 true,
                 "NOT_YET",
                 "NOT_YET",
+                "SPECIAL_VETERANS",
+                "SOCIAL",
+                "GENERAL",
                 1L,
                 BigDecimal.valueOf(100),
                 "SW"
@@ -558,16 +580,34 @@ class ApplicationControllerTest {
                         pathParameters(
                                 parameterWithName("userId").description("유저 식별자")
                         ),
-                        requestCookies(cookieWithName("SESSION").description("사용자의 SESSION ID, 브라우저로 접근 시 자동 생성됩니다.")),
+                        requestSessionCookie(),
                         requestFields(
                                 fieldWithPath("isFinalSubmitted").type(BOOLEAN).description("최종제출 여부"),
                                 fieldWithPath("isPrintsArrived").type(BOOLEAN).description("서류 도착 여부"),
                                 fieldWithPath("firstEvaluation").type(STRING).description("1차 평과 결과"),
                                 fieldWithPath("secondEvaluation").type(STRING).description("2차 평과 결과"),
+                                fieldWithPath("screeningSubmittedAt").type(STRING).description("최종제출 시 전형 상태"),
+                                fieldWithPath("screeningFirstEvaluationAt").type(STRING).description("1차 평가 이후 전형 상태"),
+                                fieldWithPath("screeningSecondEvaluationAt").type(STRING).description("2차 평가 이후 전형 상태"),
                                 fieldWithPath("registrationNumber").type(NUMBER).description("접수 번호"),
                                 fieldWithPath("secondScore").type(NUMBER).description("2차 평가 점수"),
                                 fieldWithPath("finalMajor").type(STRING).description("최종 합격 전공")
                         )
+                ));
+    }
+
+    @Test
+    @DisplayName("원서 삭제")
+    void deleteApplication() throws Exception {
+        doNothing().when(deleteApplicationService).execute(any(Long.class));
+
+        this.mockMvc.perform(delete("/application/v1/application/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .cookie(new Cookie("SESSION", "SESSIONID12345")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andDo(this.documentationHandler.document(
+                        requestSessionCookie()
                 ));
     }
 
@@ -619,6 +659,45 @@ class ApplicationControllerTest {
                                 fieldWithPath("[].graduation").type(STRING).description("지원자 졸업 상태"),
                                 fieldWithPath("[].registrationNumber").type(NUMBER).description("접수 번호")
                         )
+                ));
+    }
+
+    @Test
+    @DisplayName("증명사진 업로드")
+    void uploadImage() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "image/png",
+                "<<image data>>".getBytes());
+
+        Mockito.when(imageSaveService.execute(any(MultipartFile.class))).thenReturn("https://hellogsm.kr/image.png");
+
+        this.mockMvc.perform(multipart("/application/v1/image")
+                        .file(file)
+                        .cookie(new Cookie("SESSION", "SESSIONID12345"))
+                        .contentType(MediaType.MULTIPART_FORM_DATA)
+
+                )
+                .andDo(this.documentationHandler.document(
+                        requestParts(
+                                partWithName("file").description("이미지 파일")
+                        ),
+                        responseFields(
+                                fieldWithPath("url").type(STRING).description("이미지 url")
+                        )
+                ));
+    }
+
+    @Test
+    @DisplayName("최종 제출")
+    void finalSubmission() throws Exception {
+        doNothing().when(finalSubmissionService).execute(any(Long.class));
+
+        this.mockMvc.perform(put("/application/v1/final-submit")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .cookie(new Cookie("SESSION", "SESSIONID12345")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andDo(this.documentationHandler.document(
+                        requestSessionCookie()
                 ));
     }
 }

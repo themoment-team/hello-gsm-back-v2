@@ -65,9 +65,7 @@ public class SecurityConfig {
                                     Role.ROLE_USER.getRole())
             );
             authorizeHttpRequests(http);
-            http.exceptionHandling(handling -> handling
-                    .accessDeniedHandler(accessDeniedHandler)
-                    .authenticationEntryPoint(authenticationEntryPoint));
+            exceptionHandling(http);
             return http.build();
         }
     }
@@ -87,6 +85,7 @@ public class SecurityConfig {
             logout(http);
             oauth2Login(http);
             authorizeHttpRequests(http);
+            exceptionHandling(http);
             return http.build();
         }
     }
@@ -118,32 +117,67 @@ public class SecurityConfig {
         );
     }
 
+    private void exceptionHandling(HttpSecurity http) throws Exception {
+        http.exceptionHandling(handling -> handling
+                .accessDeniedHandler(accessDeniedHandler)
+                .authenticationEntryPoint(authenticationEntryPoint));
+    }
+
     private void authorizeHttpRequests(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(httpRequests -> httpRequests
                 .requestMatchers("/csrf").permitAll()
                 .requestMatchers("/auth/v1/**").permitAll()
-                .requestMatchers("/user/v1/**").hasAnyRole(
+                // user
+                .requestMatchers(HttpMethod.GET, "/user/v1/user/me").hasAnyRole(
                         Role.ROLE_UNAUTHENTICATED.getRole(),
-                        Role.ROLE_USER.getRole(),
+                        Role.ROLE_USER.getRole()
+                )
+                .requestMatchers(HttpMethod.GET, "/user/v1/user/*").hasAnyRole(
                         Role.ROLE_ADMIN.getRole()
                 )
-                .requestMatchers(HttpMethod.POST, "/identity/v1/**").hasAnyRole(
+                // identity
+                .requestMatchers(HttpMethod.GET, "/identity/v1/identity/me").hasAnyRole(
+                        Role.ROLE_USER.getRole()
+                )
+                .requestMatchers(HttpMethod.PUT, "/identity/v1/identity/me").hasAnyRole(
+                        Role.ROLE_USER.getRole()
+                )
+                .requestMatchers(HttpMethod.POST, "/identity/v1/identity/me").hasAnyRole(
                         Role.ROLE_UNAUTHENTICATED.getRole(),
                         Role.ROLE_USER.getRole(),
                         Role.ROLE_ADMIN.getRole()
                 )
                 .requestMatchers(
-                        HttpMethod.GET,
-                        "/identity/v1/identity/me/send-code").hasAnyRole(
+                        HttpMethod.POST,
+                        "/identity/v1/identity/me/send-code",
+                        "/identity/v1/identity/me/send-code-test",
+                        "/identity/me/auth-code").hasAnyRole(
                         Role.ROLE_UNAUTHENTICATED.getRole(),
                         Role.ROLE_USER.getRole()
                 )
-                .requestMatchers("/identity/v1/**").hasAnyRole(
+                .requestMatchers(HttpMethod.GET, "/identity/v1/identity/*").hasAnyRole(
+                        Role.ROLE_ADMIN.getRole()
+                )
+                // application
+                .requestMatchers("/application/v1/application/me").hasAnyRole(
+                        Role.ROLE_USER.getRole()
+                )
+                .requestMatchers(HttpMethod.PUT, "/application/v1/final-submit").hasAnyRole(
+                        Role.ROLE_USER.getRole()
+                )
+                .requestMatchers(HttpMethod.POST, "/application/v1/image").hasAnyRole(
                         Role.ROLE_USER.getRole(),
                         Role.ROLE_ADMIN.getRole()
                 )
-                .requestMatchers("/application/v1/**").hasAnyRole(
-                        Role.ROLE_USER.getRole(),
+                .requestMatchers(
+                        HttpMethod.GET,
+                        "/application/v1/ticket",
+                        "/application/v1/application/all",
+                        "/application/v1/application/*"
+                ).hasAnyRole(
+                        Role.ROLE_ADMIN.getRole()
+                )
+                .requestMatchers(HttpMethod.PUT, "/application/v1/status/*").hasAnyRole(
                         Role.ROLE_ADMIN.getRole()
                 )
                 .anyRequest().permitAll()

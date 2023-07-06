@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import team.themoment.hellogsm.entity.domain.user.enums.Role;
+import team.themoment.hellogsm.web.domain.common.ControllerTestUtil;
 import team.themoment.hellogsm.web.domain.identity.controller.IdentityController;
 import team.themoment.hellogsm.web.domain.user.dto.domain.UserDto;
 import team.themoment.hellogsm.web.domain.user.service.UserByIdQuery;
@@ -39,6 +40,7 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static team.themoment.hellogsm.web.domain.common.ControllerTestUtil.enumAsString;
 
 @Tag("restDocsTest")
 @WebMvcTest(controllers = UserController.class)
@@ -75,7 +77,7 @@ class UserControllerTest {
             fieldWithPath("id").type(NUMBER).description("USER 식별자"),
             fieldWithPath("provider").type(STRING).description("OAuth2 제공자"),
             fieldWithPath("providerId").type(STRING).description("OAuth2 제공자의 회원 식별자"),
-            fieldWithPath("role").type(STRING).description("USER 권한")
+            fieldWithPath("role").type(enumAsString(Role.class)).description("USER 권한")
     };
 
     @Test
@@ -95,7 +97,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.providerId").value(user.providerId()))
                 .andExpect(jsonPath("$.role").value(user.role().name()))
                 .andDo(this.documentationHandler.document(
-                        requestCookies(cookieWithName("SESSION").description("사용자의 SESSION ID, 브라우저로 접근 시 자동 생성됩니다.")),
+                        ControllerTestUtil.requestSessionCookie(),
                         responseFields(userResponseFields)
                 ));
     }

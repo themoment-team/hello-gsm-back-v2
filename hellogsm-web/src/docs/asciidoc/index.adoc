@@ -35,8 +35,9 @@ AsciiDoc 문법에 관한 내용은 link:https://docs.asciidoctor.org/asciidoc/l
 [cols="2,5,3"]
 |====
 |환경         |DNS |비고
-|개발(dev)    | link:[https://dev-api.hellogsm.kr] |API 문서 제공
-|운영(prod)   | link:[https://api.hellogsm.kr] | API 문서 미제공
+|작성중    | 입니다 |
+// |개발(dev)    | link:[https://dev-api.hellogsm.kr] |API 문서 제공
+// |운영(prod)   | link:[https://api.hellogsm.kr] | API 문서 미제공
 |====
 
 NOTE: 해당 프로젝트 API문서는 개발환경까지 노출되는 것을 권장합니다.
@@ -46,104 +47,394 @@ CAUTION: 운영환경에 노출될 경우 보안 관련 문제가 발생할 수 
 === 응답형식
 프로젝트는 다음과 같은 응답형식을 제공합니다.
 
-==== 정상(200, OK)
+// ==== 정상(200, OK)
+//
+// |====
+// |응답데이터가 없는 경우|응답데이터가 있는 경우
+//
+// a|[source,json]
+// // ----
+// // {
+// //     "code": "0000", // 정상인 경우 '0000'
+// //     "message": "OK", // 정상인 경우 'OK'
+// //     "data": null
+// // }
+// // ----
+//
+// a|[source,json]
+// // ----
+// // {
+// //     "code": "0000", // 정상인 경우 '0000'
+// //     "message": "OK", // 정상인 경우 'OK'
+// //     "data": {
+// //         "name": "honeymon-enterprise"
+// //     }
+// // }
+// // ----
+// |====
 
-|====
-|응답데이터가 없는 경우|응답데이터가 있는 경우
-
-a|[source,json]
-----
-{
-    "code": "0000", // 정상인 경우 '0000'
-    "message": "OK", // 정상인 경우 'OK'
-    "data": null
-}
-----
-
-a|[source,json]
-----
-{
-    "code": "0000", // 정상인 경우 '0000'
-    "message": "OK", // 정상인 경우 'OK'
-    "data": {
-        "name": "honeymon-enterprise"
-    }
-}
-----
-|====
+// ==== 상태코드(HttpStatus)
+// 응답시 다음과 같은 응답상태 헤더, 응답코드 및 응답메시지를 제공합니다.
+//
+// [cols="3,1,3,3"]
+// |====
+// |HttpStatus |코드 |메시지 |설명
+//
+// |`OK(200)` |`0000` |"OK" |정상 응답
+// |`INTERNAL_SERVER_ERROR(500)`|`S5XX` |"알 수 없는 에러가 발생했습니다. 관리자에게 문의하세요." |서버 내부 오류
+// |`FORBIDDEN(403)`|`C403` |"[AccessDenied] 잘못된 접근입니다." |비인가 접속입니다.
+// |`BAD_REQUEST(400)`|`C400` |"잘못된 요청입니다. 요청내용을 확인하세요." |요청값 누락 혹은 잘못된 기입
+// |`NOT_FOUND(404)`|`C404` |"상황에 따라 다름" |요청값 누락 혹은 잘못된 기입
+//
+// |====
 
 ==== 상태코드(HttpStatus)
-응답시 다음과 같은 응답상태 헤더, 응답코드 및 응답메시지를 제공합니다.
+응답시 다음과 같은 응답상태 헤더를 제공합니다.
 
-[cols="3,1,3,3"]
+[cols="2,3"]
 |====
-|HttpStatus |코드 |메시지 |설명
+|HttpStatus |설명
+|`OK(200)`|정상 응답
+|`CREATED(201)`|데이터가 새로(수정X) 추가된 경우
+|`SEE_OTHER(303)`|요청이 성공하였으며, 권한이 변경되어 로그아웃이 필요한 경우
+|`BAD_REQUEST(400)`|요청값 누락, 잘못된 기입, 존재하지 않는 자료 요청
+|`FORBIDDEN(401)`|사용자를 식별이 불가능
+|`FORBIDDEN(403)`|사용자를 식별하였으나, 해당 사용자가 접근할 수 없는 요청(권한 없음)
+|`NOT_FOUND(404)`|존재하지 않는 엔드포인트
+|====
 
-|`OK(200)` |`0000` |"OK" |정상 응답
-|`INTERNAL_SERVER_ERROR(500)`|`S5XX` |"알 수 없는 에러가 발생했습니다. 관리자에게 문의하세요." |서버 내부 오류
-|`FORBIDDEN(403)`|`C403` |"[AccessDenied] 잘못된 접근입니다." |비인가 접속입니다.
-|`BAD_REQUEST(400)`|`C400` |"잘못된 요청입니다. 요청내용을 확인하세요." |요청값 누락 혹은 잘못된 기입
-|`NOT_FOUND(404)`|`C404` |"상황에 따라 다름" |요청값 누락 혹은 잘못된 기입
+==== 사용자 권한(Role)
+한 사용자는 하나의 권한만 가질 수 있습니다.
 
+[cols="2,3"]
+|====
+|Name |설명
+|`ROLE_UNAUTHENTICATED`|본인인증이 되지 않은 사용자
+|`ROLE_USER`|본인인증을 완료한 사용자
+|`ROLE_ADMIN`|관리자
 |====
 
 = API 명세
 
-== 회원(User)
-회원의 인증 정보(id, 권한 등)를 조회할 수 있습니다.
+== user/v1/
+*회원(User)*
 
-=== ID로 USER 조회
-ID로 USER를 조회합니다.
+회원의 권환과 OAuth2 정보를 관리합니다.
+
+=== Enum 정리
+
+==== EvaluationStatus
+시험 결과 상태
+[cols="2,3"]
+|====
+|Name |설명
+|`ROLE_UNAUTHENTICATED`|본인인증이 되지 않은 사용자
+|`ROLE_USER`|본인인증을 완료한 사용자
+|`ROLE_ADMIN`|관리자
+|====
+
+=== [GET] user/{userId}
+USER ID를 사용하여 특정 사용자 정보를 가져오는 엔드포인트입니다.
 
 WARNING: `userId` 를 입력해야만 합니다.
 
+==== 사용 가능한 권환
+    ROLE_ADMIN
+
+
 ==== Request
-operation::user/find-by-user-id[snippets='curl-request,httpie-request,http-request,path-parameters']
+operation::user/find-by-user-id[snippets='curl-request,http-request,path-parameters']
 
 ==== Response
 operation::user/find-by-user-id[snippets='http-response,response-fields']
 
-=== 인증된 USER 조회
-현재 인증되어있는 회원을 조회합니다.
+=== [GET] user/me
+현재 사용자 정보를 가져오는 엔드포인트입니다.
+
+==== 사용 가능한 권환
+    ROLE_UNAUTHENTICATED, ROLE_USER
 
 ==== Request
-operation::user/find-by-authenticated[snippets='curl-request,httpie-request,http-request,request-headers']
+operation::user/find-by-authenticated[snippets='curl-request,http-request']
 
 ==== Response
 operation::user/find-by-authenticated[snippets='http-response,response-fields']
 
-== 신원(Identity)
-회원의 본인인증 정보(실명, 전화번호)를 생성,조회 할 수 있습니다.
+== identity/v1/
+*신원(Identity)*
 
-=== ID로 IDENTITY 조회
-ID로  IDENTITY를 조회합니다.
+회원의 본인인증과 관련된 기능을 담당합니다.
 
-WARNING: `userId` 를 입력해야만 합니다.
+=== [POST] identity/me/send-code
+현재 사용자의 본인인증 코드를 SMS로 발신하는 엔드포인트입니다.
 
-==== Request
-operation::identity/find-by-user-id[snippets='curl-request,httpie-request,http-request,path-parameters']
+Request Body에 담긴 휴대폰 전화번호로 본인인증 코드를 발신합니다.
 
-==== Response
-operation::identity/find-by-user-id[snippets='http-response,response-fields']
-
-=== 인증 중인 정보로 IDENTITY 조회
-현재 인증되어있는 사용자 정보로 신원을 조회합니다.
+==== 사용 가능한 권환
+    ROLE_UNAUTHENTICATED, ROLE_USER
 
 ==== Request
-operation::identity/find-by-authenticated[snippets='curl-request,httpie-request,http-request,request-headers']
+operation::identity/code/send-code[snippets='curl-request,http-request,request-body']
 
 ==== Response
-operation::identity/find-by-authenticated[snippets='http-response,response-fields']
 
-=== 인증 중인 정보로 IDENTITY 생성
-현재 인증되어있는 사용자 정보로 신원을 생성합니다.
+operation::identity/code/send-code[snippets='http-response']
+
+=== [POST - TEST ONLY] identity/me/send-code-test
+현재 사용자의 본인인증 코드를 SMS로 발신하고, 본인인증 코드를 가져오는 엔드포인트입니다.
+
+SMS로 인증코드를 확인받지 않고, Response 값에 본인인증 코드를 포함하여 반환됩니다.
+
+WARNING: 테스트 환경에서만 사용 가능합니다.
+
+==== 사용 가능한 권환
+    ROLE_UNAUTHENTICATED, ROLE_USER
+
+==== Request
+operation::identity/code/send-code-test[snippets='curl-request,http-request,request-body']
+
+==== Response
+
+operation::identity/code/send-code-test[snippets='http-response']
+
+=== [GET] identity/me
+현재 사용자의 본인인증 정보를 가져오는 엔드포인트입니다.
+
+==== 사용 가능한 권환
+    ROLE_USER
+
+==== Request
+operation::identity/identity/find-by-authenticated[snippets='curl-request,http-request']
+
+==== Response
+operation::identity/identity/find-by-authenticated[snippets='http-response,response-fields']
+
+=== [POST] identity/me
+본인인증 코드와 개인정보를 입력받아서 `Identity` 를 생성하는 엔드포인트입니다.
 
 사용자의 개인정보(본인인증 정보)를 등록하고 권한을 `인증된 유저(ROLE_USER)` 로 변경합니다.
 
+==== 사용 가능한 권환
+    ROLE_UNAUTHENTICATED, ROLE_USER
+
 ==== Request
-operation::identity/create-by-authenticated[snippets='curl-request,httpie-request,http-request,request-body']
+operation::identity/identity/create-by-authenticated[snippets='curl-request,http-request,request-body']
 
 ==== Response
-사용자의 권한이 업데이트되어 세션 정보를 갱신하기 위해 로그아웃 URI로 리다이렉트됩니다.
+사용자의 권한이 변경되어 세션 정보를 갱신하기 위해 로그아웃 URI로 리다이렉트됩니다.
 
-operation::identity/create-by-authenticated[snippets='http-response']
+operation::identity/identity/create-by-authenticated[snippets='http-response']
+
+=== [GET] identity/{userID}
+USER ID를 사용하여 특정 사용자의 본인인증 정보를 가져오는 엔드포인트입니다.
+
+WARNING: `userId` 를 입력해야만 합니다.
+
+==== 사용 가능한 권환
+    ROLE_ADMIN
+
+==== Request
+operation::identity/identity/find-by-user-id[snippets='curl-request,http-request,path-parameters']
+
+==== Response
+operation::identity/identity/find-by-user-id[snippets='http-response,response-fields']
+
+=== [PUT] identity/me
+현재 사용자의 본인인증 정보를 수정하는 엔드포인트입니다.
+
+==== 사용 가능한 권환
+    ROLE_USER
+
+==== Request
+operation::identity/identity/modify-by-authenticated[snippets='curl-request,http-request,request-body']
+
+==== Response
+사용자의 권한이 변경되어 세션 정보를 갱신하기 위해 로그아웃 URI로 리다이렉트됩니다.
+
+operation::identity/identity/modify-by-authenticated[snippets='http-response']
+
+== application/v1/
+*원서(Application)*
+
+=== Enum 정리
+
+==== EvaluationStatus
+시험 결과 상태
+[cols="2,3"]
+|====
+|Name |설명
+|`NOT_YET`|아직 시험 이전 시점
+|`PASS`|통과
+|`FALL`|탈락
+|====
+==== Gender
+성별
+[cols="2,3"]
+|====
+|Name |설명
+|`MALE`|남성
+|`FEMALE`|여성
+|====
+==== GraduationStatus
+졸업 상태
+[cols="2,3"]
+|====
+|Name |설명
+|`CANDIDATE`|졸업 예정
+|`GRADUATE`|졸업
+|`GED`|검정고시
+|====
+
+==== Major
+학과
+[cols="2,3"]
+|====
+|Name |설명
+|`AI`|AI 학과
+|`IOT`|IOT 학고
+|`SW`|SW 학과
+|====
+==== Screening
+입학 전형
+[cols="2,3"]
+|====
+|Name |설명
+|`GENERAL`|일반
+|`SOCIAL`|사회통합(특별)전형
+|`SPECIAL_VETERANS`| [전형 외 특별전형] 국가보훈대상자
+|`SPECIAL_ADMISSION`| [전형 외 특별전형] 특례입학대상자
+|====
+
+=== [GET] application/me
+현재 사용자의 원서 정보를 가져오는 엔드포인트입니다.
+
+==== 사용 가능한 권환
+    ROLE_USER
+
+==== Request
+operation::application/ged-read-me[snippets='curl-request,http-request']
+
+==== Response
+
+===== 검정고시(GED) 학생의 경우
+operation::application/ged-read-me[snippets='http-response,response-fields']
+
+===== 졸업 예정(CANDIDATE), 졸업(GRADUATE) 학생의 경우
+operation::application/general-read-me[snippets='http-response,response-fields']
+
+=== [GET] application/{userId}
+USER ID를 사용하여 특정 사용자의 원서 정보를 가져오는 엔드포인트입니다.
+
+==== 사용 가능한 권환
+    ROLE_ADMIN
+
+==== Request
+operation::application/ged-read-one[snippets='curl-request,http-request']
+
+==== Response
+
+===== 검정고시(GED) 학생의 경우
+operation::application/ged-read-one[snippets='http-response,response-fields']
+
+===== 졸업 예정(CANDIDATE), 졸업(GRADUATE) 학생의 경우
+operation::application/general-read-one[snippets='http-response,response-fields']
+
+=== [POST] image
+현재 사용자의 증명사진을 등록하는 엔드포인트입니다.
+
+==== 사용 가능한 권환
+    ROLE_USER
+
+==== Request
+operation::application/upload-image[snippets='curl-request,http-request,request-parts']
+
+==== Response
+operation::application/upload-image[snippets='http-response,response-fields']
+
+=== [POST] application/me
+현재 사용자의 원서를 생성하는 엔드포인트입니다.
+
+==== 사용 가능한 권환
+    ROLE_USER
+
+==== Request
+operation::application/create[snippets='curl-request,http-request,request-fields']
+
+==== Response
+operation::application/create[snippets='http-response']
+
+=== [PUT] application/me
+현재 사용자의 원서를 수정하는 엔드포인트입니다.
+
+==== 사용 가능한 권환
+    ROLE_USER
+
+==== Request
+operation::application/modify[snippets='curl-request,http-request,request-fields']
+
+==== Response
+operation::application/modify[snippets='http-response']
+
+=== [DELETE] application/me
+현재 사용자의 원서를 삭제하는 엔드포인트입니다.
+
+==== 사용 가능한 권환
+    ROLE_USER
+
+==== Request
+operation::application/delete-application[snippets='curl-request,http-request']
+
+==== Response
+operation::application/delete-application[snippets='http-response']
+
+=== [GET] application/all
+모든 사용자의 원서를 조회하는 엔드포인트입니다.
+
+==== 사용 가능한 권환
+    ROLE_ADMIN
+
+==== Request
+operation::application/find-all[snippets='curl-request,http-request,query-parameters']
+
+==== Response
+operation::application/delete-application[snippets='http-response']
+
+=== [PUT] status/{userId}
+USER ID를 사용하여 특정 사용자의 원서의 상태를 변경하는 엔드포인트입니다.
+
+==== 사용 가능한 권환
+    ROLE_ADMIN
+
+
+==== Request
+operation::application/modify-status[snippets='curl-request,http-request,request-fields']
+
+==== Response
+operation::application/modify-status[snippets='http-response']
+
+=== [PUT] final-submit
+현재 사용자의 원서를 최종제출하는 엔드포인트입니다.
+
+최종제출 이후 사용자의 원서의 수정/삭제는 불가능합니다. (``ADMIN``은 수정 가능)
+
+==== 사용 가능한 권환
+    ROLE_USER
+
+
+==== Request
+operation::application/final-submission[snippets='curl-request,http-request']
+
+==== Response
+operation::application/final-submission[snippets='http-response']
+
+=== [GET] tickets
+모든 사용자의 수험표 정보를 조회하는 엔드포인트입니다.
+
+==== 사용 가능한 권환
+    ROLE_ADMIN
+
+==== Request
+operation::application/tickets[snippets='curl-request,http-request,query-parameters']
+
+==== Response
+operation::application/tickets[snippets='http-response,response-fields']

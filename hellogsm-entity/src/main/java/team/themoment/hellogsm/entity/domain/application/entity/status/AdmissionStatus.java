@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import team.themoment.hellogsm.entity.domain.application.enums.EvaluationStatus;
 import team.themoment.hellogsm.entity.domain.application.enums.Major;
+import team.themoment.hellogsm.entity.domain.application.enums.Screening;
 
 import java.math.BigDecimal;
 
@@ -41,6 +42,18 @@ public class AdmissionStatus {
     @Column(name = "second_evaluation", nullable = false)
     private EvaluationStatus secondEvaluation;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "screening_submitted_at", nullable = true)
+    private Screening screeningSubmittedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "screening_first_evaluation_at", nullable = true)
+    private Screening screeningFirstEvaluationAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "screening_second_evaluation_at", nullable = true)
+    private Screening screeningSecondEvaluationAt;
+
     @Column(name = "registration_number", nullable = true)
     private Long registrationNumber;  // 접수 번호, 원서 제출 기간 후 배정됨
 
@@ -63,6 +76,9 @@ public class AdmissionStatus {
                 .isPrintsArrived(false)
                 .firstEvaluation(EvaluationStatus.NOT_YET)
                 .secondEvaluation(EvaluationStatus.NOT_YET)
+                .screeningSubmittedAt(null)
+                .screeningFirstEvaluationAt(null)
+                .screeningSecondEvaluationAt(null)
                 .finalMajor(null)
                 .build();
     }
@@ -75,6 +91,7 @@ public class AdmissionStatus {
         return isPrintsArrived;
     }
 
+    // null이 아닌 기본 값이 있는 경우 기본값 정해주기
     @PrePersist
     public void prePersist() {
         isFinalSubmitted = isFinalSubmitted == null ? false : isFinalSubmitted;

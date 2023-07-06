@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: jdbc:h2:tcp://localhost/~/hello-batch
+    username: sa
+    password:
+    driverClassName: org.h2.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        check_nullability: true
+        format_sql: true
+        highlight_sql: true
+        use_sql_comments: true
+    show_sql: true
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      name: ${JOB_NAME:EMPTY}

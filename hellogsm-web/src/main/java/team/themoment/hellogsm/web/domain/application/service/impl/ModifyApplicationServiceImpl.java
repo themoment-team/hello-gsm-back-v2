@@ -26,8 +26,12 @@ public class ModifyApplicationServiceImpl implements ModifyApplicationService {
     public void execute(ApplicationReqDto body, Long userId) {
         if (!userRepository.existsById(userId))
             throw new ExpectedException("존재하지 않는 유저입니다", HttpStatus.BAD_REQUEST);
+
         Application application = applicationRepository.findByUserId(userId)
                 .orElseThrow(() -> new ExpectedException("원서가 존재하지 않습니다", HttpStatus.BAD_REQUEST));
+        if (application.getAdmissionStatus().isFinalSubmitted())
+            throw new ExpectedException("최종제출이 완료된 원서입니다", HttpStatus.BAD_REQUEST);
+
         Identity identity = identityRepository.findByUserId(userId)
                 .orElseThrow(() -> new ExpectedException("Identity가 존재하지 않습니다", HttpStatus.BAD_REQUEST));
 

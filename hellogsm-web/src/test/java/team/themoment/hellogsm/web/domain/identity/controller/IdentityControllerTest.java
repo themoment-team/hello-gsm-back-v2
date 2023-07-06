@@ -23,6 +23,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import team.themoment.hellogsm.entity.domain.application.enums.Gender;
+import team.themoment.hellogsm.web.domain.common.ControllerTestUtil;
 import team.themoment.hellogsm.web.domain.identity.dto.domain.IdentityDto;
 import team.themoment.hellogsm.web.domain.identity.dto.request.IdentityReqDto;
 import team.themoment.hellogsm.web.domain.identity.service.CreateIdentityService;
@@ -33,8 +34,6 @@ import team.themoment.hellogsm.web.global.security.auth.AuthenticatedUserManager
 import java.time.LocalDate;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.springframework.restdocs.cookies.CookieDocumentation.cookieWithName;
-import static org.springframework.restdocs.cookies.CookieDocumentation.requestCookies;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
@@ -45,6 +44,8 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static team.themoment.hellogsm.web.domain.common.ControllerTestUtil.enumAsString;
+import static team.themoment.hellogsm.web.domain.common.ControllerTestUtil.requestSessionCookie;
 
 @Tag("restDocsTest")
 @WebMvcTest(controllers = IdentityController.class)
@@ -79,7 +80,7 @@ class IdentityControllerTest {
             fieldWithPath("name").type(STRING).description("USER의 이름"),
             fieldWithPath("phoneNumber").type(STRING).description("USER의 휴대전화 번호"),
             fieldWithPath("birth").type(STRING).description("USER의 생년월일"),
-            fieldWithPath("gender").type(STRING).description("USER의 성별"),
+            fieldWithPath("gender").type(enumAsString(Gender.class)).description("USER의 성별"),
             fieldWithPath("userId").type(NUMBER).description("USER 식별자")
     };
 
@@ -112,7 +113,7 @@ class IdentityControllerTest {
         identityDtoPerform(get("/identity/v1/identity/me")
                 .cookie(new Cookie("SESSION", "SESSIONID12345")))
                 .andDo(this.documentationHandler.document(
-                        requestCookies(cookieWithName("SESSION").description("사용자의 SESSION ID, 브라우저로 접근 시 자동 생성됩니다.")),
+                        requestSessionCookie(),
                         responseFields(identityResponseFields)
                 ));
     }
@@ -147,7 +148,7 @@ class IdentityControllerTest {
                         .content(this.objectMapper.writeValueAsString(request)))
                 .andExpect(status().isSeeOther())
                 .andDo(this.documentationHandler.document(
-                        requestCookies(cookieWithName("SESSION").description("사용자의 SESSION ID, 브라우저로 접근 시 자동 생성됩니다."))
+                        requestSessionCookie()
                 ));
     }
 
@@ -169,7 +170,7 @@ class IdentityControllerTest {
                         .content(this.objectMapper.writeValueAsString(request)))
                 .andExpect(status().isSeeOther())
                 .andDo(this.documentationHandler.document(
-                        requestCookies(cookieWithName("SESSION").description("사용자의 SESSION ID, 브라우저로 접근 시 자동 생성됩니다."))
+                        requestSessionCookie()
                 ));
     }
 }

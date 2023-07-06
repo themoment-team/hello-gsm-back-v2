@@ -11,11 +11,13 @@ import team.themoment.hellogsm.entity.domain.application.entity.grade.GedAdmissi
 import team.themoment.hellogsm.entity.domain.application.entity.grade.GraduateAdmissionGrade;
 import team.themoment.hellogsm.entity.domain.application.entity.grade.MiddleSchoolGrade;
 import team.themoment.hellogsm.entity.domain.application.entity.status.AdmissionStatus;
+import team.themoment.hellogsm.entity.domain.application.enums.EvaluationStatus;
 import team.themoment.hellogsm.entity.domain.application.enums.GraduationStatus;
 import team.themoment.hellogsm.entity.domain.application.enums.Major;
 import team.themoment.hellogsm.entity.domain.application.enums.Screening;
 import team.themoment.hellogsm.web.domain.application.dto.domain.*;
 import team.themoment.hellogsm.web.domain.application.dto.request.ApplicationReqDto;
+import team.themoment.hellogsm.web.domain.application.dto.request.ApplicationStatusReqDto;
 import team.themoment.hellogsm.web.domain.application.dto.response.ApplicationListDto;
 import team.themoment.hellogsm.web.domain.application.dto.response.ApplicationListInfoDto;
 import team.themoment.hellogsm.web.domain.application.dto.response.ApplicationsDto;
@@ -114,6 +116,9 @@ public interface ApplicationMapper {
             @Mapping(source = "printsArrived", target = "isPrintsArrived"),
             @Mapping(source = "firstEvaluation", target = "firstEvaluation"),
             @Mapping(source = "secondEvaluation", target = "secondEvaluation"),
+            @Mapping(source = "screeningSubmittedAt", target = "screeningSubmittedAt"),
+            @Mapping(source = "screeningFirstEvaluationAt", target = "screeningFirstEvaluationAt"),
+            @Mapping(source = "screeningSecondEvaluationAt", target = "screeningSecondEvaluationAt"),
             @Mapping(source = "registrationNumber", target = "registrationNumber"),
             @Mapping(source = "secondScore", target = "secondScore"),
             @Mapping(source = "finalMajor", target = "finalMajor"),
@@ -155,12 +160,67 @@ public interface ApplicationMapper {
             @Mapping(source = "admissionStatus.isPrintsArrived", target = "isPrintsArrived"),
             @Mapping(source = "admissionStatus.firstEvaluation", target = "firstEvaluation"),
             @Mapping(source = "admissionStatus.secondEvaluation", target = "secondEvaluation"),
+            @Mapping(source = "admissionStatus.screeningSubmittedAt", target = "screeningSubmittedAt"),
+            @Mapping(source = "admissionStatus.screeningFirstEvaluationAt", target = "screeningFirstEvaluationAt"),
+            @Mapping(source = "admissionStatus.screeningSecondEvaluationAt", target = "screeningSecondEvaluationAt"),
             @Mapping(source = "admissionStatus.registrationNumber", target = "registrationNumber"),
             @Mapping(source = "admissionStatus.secondScore", target = "secondScore"),
     })
     ApplicationsDto applicationToApplicationsDto(Application applicationList);
 
+    default AdmissionStatus createNewAdmissionStatus(Long admissionStatusId, ApplicationStatusReqDto applicationStatusReqDto) {
+        Major finalMajor = null;
+        Screening screeningSubmittedAt = null;
+        Screening screeningFirstEvaluationAt = null;
+        Screening screeningSecondEvaluationAt = null;
+
+        try {
+            if(applicationStatusReqDto.finalMajor() != null)
+                finalMajor = Major.valueOf(applicationStatusReqDto.finalMajor());
+            if(applicationStatusReqDto.screeningSubmittedAt() != null)
+                screeningSubmittedAt = Screening.valueOf(applicationStatusReqDto.screeningSubmittedAt());
+            if(applicationStatusReqDto.screeningFirstEvaluationAt() != null)
+                screeningFirstEvaluationAt = Screening.valueOf(applicationStatusReqDto.screeningFirstEvaluationAt());
+            if(applicationStatusReqDto.screeningSecondEvaluationAt() != null)
+                screeningSecondEvaluationAt = Screening.valueOf(applicationStatusReqDto.screeningSecondEvaluationAt());
+        } catch (Exception ex) {
+            throw new RuntimeException("예상하지 못한 에러 발생",ex);
+        }
+
+        return AdmissionStatus.builder()
+                .id(admissionStatusId)
+                .isPrintsArrived(applicationStatusReqDto.isPrintsArrived())
+                .firstEvaluation(EvaluationStatus.valueOf(applicationStatusReqDto.firstEvaluation()))
+                .secondEvaluation(EvaluationStatus.valueOf(applicationStatusReqDto.secondEvaluation()))
+                .isFinalSubmitted(applicationStatusReqDto.isFinalSubmitted())
+                .registrationNumber(applicationStatusReqDto.registrationNumber())
+                .screeningSubmittedAt(screeningSubmittedAt)
+                .screeningFirstEvaluationAt(screeningFirstEvaluationAt)
+                .screeningSecondEvaluationAt(screeningSecondEvaluationAt)
+                .finalMajor(finalMajor)
+                .secondScore(applicationStatusReqDto.secondScore())
+                .build();
+    }
+
     List<ApplicationsDto> applicationListToApplicationsDtoList(List<Application> applicationList);
+
+
+    default AdmissionStatus updateFinalSubmission(AdmissionStatus admissionStatus) {
+        return AdmissionStatus.builder()
+                .id(admissionStatus.getId())
+                .isFinalSubmitted(true)
+                .isPrintsArrived(admissionStatus.isPrintsArrived())
+                .firstEvaluation(admissionStatus.getFirstEvaluation())
+                .secondEvaluation(admissionStatus.getSecondEvaluation())
+                .registrationNumber(admissionStatus.getRegistrationNumber())
+                .screeningSubmittedAt(admissionStatus.getScreeningSubmittedAt())
+                .screeningFirstEvaluationAt(admissionStatus.getScreeningFirstEvaluationAt())
+                .screeningSecondEvaluationAt(admissionStatus.getScreeningSecondEvaluationAt())
+                .secondScore(admissionStatus.getSecondScore())
+                .finalMajor(admissionStatus.getFinalMajor())
+                .build();
+    }
+
 
     default Application applicationReqDtoAndIdentityDtoToApplication(ApplicationReqDto applicationReqDto, IdentityDto identityDto, Long userId, @Nullable Long appId) {
 

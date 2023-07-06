@@ -11,6 +11,7 @@ import static org.springframework.restdocs.operation.preprocess.Preprocessors.pr
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static team.themoment.hellogsm.web.domain.common.ControllerTestUtil.requestSessionCookie;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -32,6 +33,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import jakarta.servlet.http.Cookie;
+import team.themoment.hellogsm.web.domain.common.ControllerTestUtil;
 import team.themoment.hellogsm.web.domain.identity.dto.request.AuthenticateCodeReqDto;
 import team.themoment.hellogsm.web.domain.identity.dto.request.GenerateCodeReqDto;
 import team.themoment.hellogsm.web.domain.identity.service.AuthenticateCodeService;
@@ -79,7 +81,7 @@ class CodeControllerTest {
                         .content(this.objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andDo(this.documentationHandler.document(
-                        requestCookies(cookieWithName("SESSION").description("사용자의 SESSION ID, 브라우저로 접근 시 자동 생성됩니다."))
+                        requestSessionCookie()
                 ));
     }
 
@@ -98,7 +100,7 @@ class CodeControllerTest {
                         .content(this.objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andDo(this.documentationHandler.document(
-                        requestCookies(cookieWithName("SESSION").description("사용자의 SESSION ID, 브라우저로 접근 시 자동 생성됩니다."))
+                        requestSessionCookie()
                 ));
     }
 
@@ -117,7 +119,7 @@ class CodeControllerTest {
                         .content(this.objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andDo(this.documentationHandler.document(
-                        requestCookies(cookieWithName("SESSION").description("사용자의 SESSION ID, 브라우저로 접근 시 자동 생성됩니다."))
+                        requestSessionCookie()
                 ));
     }
 }

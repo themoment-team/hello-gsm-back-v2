@@ -26,14 +26,15 @@ public class IdentityController {
     private final ModifyIdentityService modifyIdentityService;
     private final IdentityQuery identityQuery;
 
-    @PostMapping("/identity/{userId}")
-    public ResponseEntity<IdentityDto> createByUserId(
-            @RequestBody @Valid IdentityReqDto reqDto,
-            @PathVariable Long userId
-    ) {
-        IdentityDto identityResDto = createIdentityService.execute(reqDto, userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(identityResDto);
-    }
+    // 사용은 안 하지만 혹시 몰라서 남김
+//    @PostMapping("/identity/{userId}")
+//    public ResponseEntity<IdentityDto> createByUserId(
+//            @RequestBody @Valid IdentityReqDto reqDto,
+//            @PathVariable Long userId
+//    ) {
+//        IdentityDto identityResDto = createIdentityService.execute(reqDto, userId);
+//        return ResponseEntity.status(HttpStatus.CREATED).body(identityResDto);
+//    }
 
     @PostMapping("/identity/me")
     public ResponseEntity<Object> create(

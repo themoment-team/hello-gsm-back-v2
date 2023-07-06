@@ -84,7 +84,7 @@ public record ApplicationReqDto(
         @NotSpace
         String schoolLocation,
 
-        @Pattern(regexp = "^(GENERAL|SOCIAL|SPECIAL)$")
+        @Pattern(regexp = "^(GENERAL|SOCIAL|SPECIAL_VETERANS|SPECIAL_ADMISSION)$")
         @NotBlank
         String screening
 ) {

@@ -43,6 +43,7 @@ public class ApplicationController {
     private final DeleteApplicationService deleteApplicationService;
     private final QueryTicketsService queryTicketsService;
     private final ImageSaveService imageSaveService;
+    private final FinalSubmissionService finalSubmissionService;
 
     @GetMapping("/application/{userId}")
     public SingleApplicationRes readOne(@PathVariable("userId") Long userId) {
@@ -109,5 +110,11 @@ public class ApplicationController {
     public Map<String, String> uploadImage(@Valid @RequestPart(name = "file") MultipartFile multipartFile) {
         String url = imageSaveService.execute(multipartFile);
         return Map.of("url", url);
+    }
+
+    @PutMapping("/final-submit")
+    public ResponseEntity<Map<String, String>> finalSubmission() {
+        finalSubmissionService.execute(manager.getId());
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("message", "수정되었습니다"));
     }
 }
