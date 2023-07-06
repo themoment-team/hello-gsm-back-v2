@@ -6,6 +6,7 @@ bootJar {
     enabled = true
     layered // layered 이미지 생성
 }
+
 jar { enabled = true }
 
 ext {
