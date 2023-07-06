@@ -70,3 +70,7 @@ tasks.named('asciidoctor') {
     configurations 'asciidoctorExt'
     dependsOn test
 }
+
+bootBuildImage {
+    imageName = "docker.io/library/${project.name}:${project.version}"
+}
