@@ -58,13 +58,6 @@ dependencies {
     implementation 'io.awspring.cloud:spring-cloud-aws-starter-sns:3.0.1'
 }
 
-task restDocsTest(type: Test) {
-    outputs.dir snippetsDir
-    useJUnitPlatform {
-        includeTags 'restDocsTest'
-    }
-}
-
 tasks.named('asciidoctor') {
     inputs.dir snippetsDir
     configurations 'asciidoctorExt'

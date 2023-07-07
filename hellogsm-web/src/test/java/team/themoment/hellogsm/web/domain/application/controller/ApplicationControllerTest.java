@@ -58,7 +58,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static team.themoment.hellogsm.web.domain.common.ControllerTestUtil.enumAsString;
 import static team.themoment.hellogsm.web.domain.common.ControllerTestUtil.requestSessionCookie;
 
-@Tag("restDocsTest")
 @WebMvcTest(controllers = ApplicationController.class)
 @ExtendWith(RestDocumentationExtension.class)
 class ApplicationControllerTest {

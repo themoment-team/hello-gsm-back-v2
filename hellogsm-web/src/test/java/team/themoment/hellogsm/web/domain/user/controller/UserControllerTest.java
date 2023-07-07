@@ -42,7 +42,6 @@ import static org.springframework.restdocs.request.RequestDocumentation.pathPara
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static team.themoment.hellogsm.web.domain.common.ControllerTestUtil.enumAsString;
 
-@Tag("restDocsTest")
 @WebMvcTest(controllers = UserController.class)
 @ExtendWith(RestDocumentationExtension.class)
 class UserControllerTest {

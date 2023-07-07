@@ -40,7 +40,6 @@ import team.themoment.hellogsm.web.domain.identity.service.AuthenticateCodeServi
 import team.themoment.hellogsm.web.domain.identity.service.GenerateCodeService;
 import team.themoment.hellogsm.web.global.security.auth.AuthenticatedUserManager;
 
-@Tag("restDocsTest")
 @WebMvcTest(controllers = CodeController.class)
 @ExtendWith(RestDocumentationExtension.class)
 class CodeControllerTest {
