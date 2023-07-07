@@ -33,7 +33,7 @@ services:
     #env_file:
     #  - "prod.env"
     container_name: hello-spring
-    image: hellogsm-web:0.0.1-SNAPSHOT
+    image: yangsijun0528/hellogsm-web:latest
     #    platform: linux/amd64 # to arm64 when use OS in x86
     ports:
       - "8080:8080"

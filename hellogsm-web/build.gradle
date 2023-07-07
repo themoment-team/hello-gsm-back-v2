@@ -61,7 +61,7 @@ dependencies {
 task restDocsTest(type: Test) {
     outputs.dir snippetsDir
     useJUnitPlatform {
-            includeTags 'restDocsTest'
+        includeTags 'restDocsTest'
     }
 }
 
@@ -72,5 +72,19 @@ tasks.named('asciidoctor') {
 }
 
 bootBuildImage {
-    imageName = "docker.io/library/${project.name}:${project.version}"
+    //  ./gradlew hellogsm-web:bootBuildImage -Dspring.profiles.active=local -Pimage-tag=latest -Pdocker-password=비밀번호 -Pdo-publish=true
+
+    String tag = project.hasProperty('image-tag') ? project.getProperty('image-tag') : 'latest'
+    String dockerPw = project.hasProperty('docker-password') ? project.getProperty('docker-password') : ''
+    Boolean doPublish = project.hasProperty('do-publish') ? Boolean.valueOf(project.getProperty('do-publish')) : false // 명시적으로 설정 안해주면 hub에 push 안됨
+
+    imageName = "yangsijun0528/${project.name}:${tag}"
+    publish = doPublish
+
+    docker {
+        publishRegistry {
+            username = "yangsijun0528"
+            password = dockerPw
+        }
+    }
 }
