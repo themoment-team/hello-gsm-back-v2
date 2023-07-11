@@ -1,20 +1,19 @@
 package team.themoment.hellogsm.web.global.exception;
 
 
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
-import team.themoment.hellogsm.web.global.exception.error.ExpectedException;
-import team.themoment.hellogsm.web.global.exception.model.ExceptionResponseEntity;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import team.themoment.hellogsm.web.global.exception.error.ExpectedException;
+import team.themoment.hellogsm.web.global.exception.model.ExceptionResponseEntity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,6 +37,8 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ExpectedException.class)
     private ResponseEntity<ExceptionResponseEntity> expectedException(ExpectedException ex) {
+        log.warn("ExpectedException : {} ", ex.getMessage());
+        log.trace("ExpectedException Details : ", ex);
         return ResponseEntity.status(ex.getStatusCode().value())
                 .body(ExceptionResponseEntity.of(ex));
     }
@@ -61,6 +62,8 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler({MethodArgumentNotValidException.class, HttpMessageNotReadableException.class})
     public ResponseEntity<ExceptionResponseEntity> validationException(MethodArgumentNotValidException ex) {
+        log.warn("Validation Failed : {}", ex.getMessage());
+        log.trace("Validation Failed Details : ", ex);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST.value())
                 .body(new ExceptionResponseEntity(methodArgumentNotValidExceptionToJson(ex)));
     }
@@ -73,7 +76,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ExceptionResponseEntity> unExpectedException(RuntimeException ex) {
-        log.error("unExpectedException : ", ex);
+        log.error("UnExpectedException Occur : ", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .body(new ExceptionResponseEntity("internal server error has occurred"));
     }
@@ -89,14 +92,18 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(NoHandlerFoundException.class)
     public ResponseEntity<ExceptionResponseEntity> noHandlerFoundException(NoHandlerFoundException ex) {
+        log.warn("Not Found Endpoint : {}", ex.getMessage());
+        log.trace("Not Found Endpoint Details : ", ex);
         return ResponseEntity.status(ex.getStatusCode())
                 .body(new ExceptionResponseEntity(HttpStatus.NOT_FOUND.getReasonPhrase()));
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ExceptionResponseEntity> maxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
+        log.warn("The file is too big : {}", ex.getMessage());
+        log.trace("The file is too big Details : ", ex);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST.value())
-                .body(new ExceptionResponseEntity("The file is so big and beautiful"));
+                .body(new ExceptionResponseEntity("The file is too big, limited file size : " + ex.getMaxUploadSize()));
     }
 
     private static String methodArgumentNotValidExceptionToJson(MethodArgumentNotValidException ex) {

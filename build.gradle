@@ -30,6 +30,9 @@ subprojects {
         compileOnly 'org.projectlombok:lombok'
         annotationProcessor 'org.projectlombok:lombok'
 
+        /** aop **/
+        implementation 'org.springframework.boot:spring-boot-starter-aop'
+
         /** for test **/
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
     }

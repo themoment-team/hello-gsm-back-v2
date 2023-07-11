@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.Random;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import team.themoment.hellogsm.web.domain.identity.domain.AuthenticationCode;
 import team.themoment.hellogsm.web.domain.identity.dto.request.GenerateCodeReqDto;
 import team.themoment.hellogsm.web.domain.identity.repository.CodeRepository;
@@ -14,7 +15,7 @@ import team.themoment.hellogsm.web.domain.identity.service.CodeNotificationServi
 import team.themoment.hellogsm.web.domain.identity.service.GenerateCodeService;
 import team.themoment.hellogsm.web.global.exception.error.ExpectedException;
 
-@Component
+@Service
 @RequiredArgsConstructor
 public class GenerateCodeServiceImpl implements GenerateCodeService {
 
