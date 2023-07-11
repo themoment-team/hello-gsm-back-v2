@@ -1,5 +1,10 @@
 package team.themoment.hellogsm.web.global.security;
 
+import org.springframework.security.web.authentication.ForwardAuthenticationFailureHandler;
+import org.springframework.security.web.authentication.ForwardAuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler;
 import team.themoment.hellogsm.entity.domain.user.enums.Role;
 import team.themoment.hellogsm.web.global.data.profile.ServerProfile;
 import team.themoment.hellogsm.web.global.security.auth.AuthEnvironment;
@@ -105,7 +110,8 @@ public class SecurityConfig {
                 oauth2Login
                         .authorizationEndpoint().baseUri(oauth2LoginEndpointBaseUri).and()
                         .loginProcessingUrl(oauth2LoginProcessingUri)
-                        .defaultSuccessUrl(authEnv.redirectBaseUri())
+                        .successHandler(new SimpleUrlAuthenticationSuccessHandler(authEnv.redirectBaseUri()))
+                        .failureHandler(new SimpleUrlAuthenticationFailureHandler(authEnv.redirectLoginFailureUri()))
 
         );
     }
